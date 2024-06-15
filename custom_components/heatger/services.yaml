@@ -1,7 +1,6 @@
 toggle:
   fields:
     zone:
-      description: "the zone you want to update (number)"
       example: 1
       required: true
       selector:
@@ -10,14 +9,12 @@ toggle:
           max: 5
           step: 1
     type:
-      description: "the type of toggle (state or mode)"
       example: "state"
       required: true
       default: state
       selector:
         select:
+          translation_key: "type"
           options:
-            - value: "state"
-              label: "State"
-            - value: "mode"
-              label: "Mode"
+            - state
+            - mode

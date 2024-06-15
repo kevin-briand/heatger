@@ -39,4 +39,4 @@ To use it, you should provide params in the payload :
  - zone: the zone you want to update (number)
 
 ## Frontend card
-You can also add a [card](https://github.com/kevin-briand/HA-massa-node-card)
+You can also add a [card](https://github.com/kevin-briand/heatger-card)

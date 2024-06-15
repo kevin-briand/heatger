@@ -14,5 +14,29 @@
                 }
             }
         }
-   }
+   },
+  "services": {
+    "toggle": {
+      "name": "Toggle",
+      "description": "Changement de l'état ou le mode d'une zone.",
+      "fields": {
+        "type": {
+          "name": "Type",
+          "description": "Le type de basculement (Etat ou Mode)."
+        },
+        "zone": {
+          "name": "Zone",
+          "description": "La zone que vous voulez modifier."
+        }
+      }
+    }
+  },
+  "selector": {
+    "type": {
+      "options": {
+        "state": "Etat",
+        "mode": "Mode"
+      }
+    }
+  }
 }

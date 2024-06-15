@@ -14,5 +14,29 @@
                 }
             }
         }
-   }
+   },
+  "services": {
+    "toggle": {
+      "name": "Toggle",
+      "description": "Toggle state or mode of a zone.",
+      "fields": {
+        "type": {
+          "name": "Type",
+          "description": "the type of toggle (state or mode)."
+        },
+        "zone": {
+          "name": "Zone",
+          "description": "the zone you want to update (number)."
+        }
+      }
+    }
+  },
+  "selector": {
+    "type": {
+      "options": {
+        "state": "State",
+        "mode": "Mode"
+      }
+    }
+  }
 }
