@@ -1,0 +1,56 @@
+{
+  "panel": {
+    "prog": {
+      "selectDays": "Selectionner jours",
+      "setTime": "Heure",
+      "setState": "Etat",
+      "day": "Jour",
+      "time": "Heure",
+      "state": "Etat"
+    },
+    "user": {
+      "title": "Utilisateurs",
+      "person": "Personne",
+      "name": "Nom",
+      "id": "Id"
+    },
+    "general": {
+      "title": "Général",
+      "name": "Nom"
+    },
+    "add": "Ajouter",
+    "delete": "Supprimer",
+    "deleteAll": "Tous supprimer"
+  },
+  "state": {
+    "comfort": "Confort",
+    "eco": "Eco",
+    "frostfree": "Hors-gel"
+  },
+  "dayOfWeek": {
+    "monday": "Lundi",
+    "tuesday": "Mardi",
+    "wednesday": "Mercredi",
+    "thursday": "Jeudi",
+    "friday": "Vendredi",
+    "saturday": "Samedi",
+    "sunday": "Dimanche"
+  },
+  "zone": "Zone",
+    "error": "Erreur",
+  "card": {
+    "mode": "Mode",
+    "timeout": "Temps restant",
+    "frostFree": {
+      "title": "Hors-gel activé",
+      "stop": "Stop",
+      "activate": "Activation",
+      "endDate": "Date fin",
+      "frostFree": "Hors-gel"
+    }
+  },
+  "mode": {
+    "auto": "Auto",
+    "manual": "Manuel"
+  }
+}

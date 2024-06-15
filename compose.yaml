@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: "ghcr.io/home-assistant/home-assistant:stable"
+    volumes:
+      - C:\Users\Kevin\Desktop\Documents\Projets\HA-custom\heatger\custom_components:/config/custom_components
+      - C:\Users\Kevin\Desktop\Documents\Projets\ha-config-test:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    restart: unless-stopped
+    privileged: true
+    network_mode: host

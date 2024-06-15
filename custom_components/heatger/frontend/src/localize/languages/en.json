@@ -1,0 +1,56 @@
+{
+  "panel": {
+    "prog": {
+      "selectDays": "Select days",
+      "setTime": "Set time",
+      "setState": "Set State",
+      "day": "Day",
+      "time": "Time",
+      "state": "State"
+    },
+    "user": {
+      "title": "Users",
+      "person": "Person",
+      "name": "Name",
+      "id": "Id"
+    },
+    "general": {
+      "title": "General",
+      "name": "Name"
+    },
+    "add": "Add",
+    "delete": "Delete",
+    "deleteAll": "Delete all"
+  },
+  "state": {
+    "comfort": "Comfort",
+    "eco": "Eco",
+    "frostFree": "Frost-free"
+  },
+  "dayOfWeek": {
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday"
+  },
+  "zone": "Zone",
+  "error": "Error",
+  "card": {
+    "mode": "Mode",
+    "timeout": "timeout",
+    "frostFree": {
+      "title": "Frost-free activated",
+      "stop": "Stop",
+      "activate": "Activate",
+      "endDate": "End date",
+      "frostFree": "Frost-free"
+    }
+  },
+  "mode": {
+    "auto": "Auto",
+    "manual": "Manual"
+  }
+}

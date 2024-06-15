@@ -1,0 +1,18 @@
+{
+    "config": {
+        "abort": {
+            "single_instance_allowed": "Only single instance is available"
+        },
+        "error": {
+            "cannot_connect": "fail to connect, check your ip and port"
+        },
+        "step": {
+            "user": {
+                "data": {
+                  "ip": "Ip",
+                  "port": "Port"
+                }
+            }
+        }
+   }
+}
