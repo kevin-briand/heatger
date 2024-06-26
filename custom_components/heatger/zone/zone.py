@@ -136,6 +136,7 @@ class Zone(Base):
         if new_state.state == HOME:
             await self.on_ip_found()
             self.untrack_event()
+            self.untrack_event = None
 
     async def set_state(self, state: State) -> None:
         """change state"""
@@ -163,6 +164,7 @@ class Zone(Base):
         # stop tracking event
         if self.untrack_event:
             self.untrack_event()
+            self.untrack_event = None
         # Wait 5 sec before starting next timer
         await self.timer.start(5, self.start_next_timer)
 

@@ -11,7 +11,6 @@ from custom_components.heatger.zone.dto.schedule_dto import ScheduleDto
 class ZoneDto:
     """zone data object"""
 
-    # pylint: disable=unused-argument
     def __init__(self, name: str, enabled: bool, prog: [], **kwargs):
         self.name = name
         self.enabled = enabled
