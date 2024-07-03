@@ -31,13 +31,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     try:
         ws = WSClient(hass, zone_manager.get_all_data, zone_manager.updated_state)
         hass.data[DOMAIN]['WS'] = ws
-        await ws._auto_reconnect()
+        await ws.connect()
     except Exception as e:
         Logs.error('WS', e)
 
     await async_register_panel(hass)
     await async_register_api(hass)
     await async_register_ws(hass)
+
+    await hass.config_entries.async_forward_entry_setups(entry, ['sensor'])
 
     return True
 

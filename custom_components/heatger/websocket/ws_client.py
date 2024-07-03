@@ -9,6 +9,8 @@ import aiohttp
 from aiohttp import ClientWebSocketResponse, WSMessage
 from homeassistant.core import HomeAssistant
 
+from custom_components.heatger.const import DOMAIN
+from custom_components.heatger.coordinator import SensorCoordinator
 from custom_components.heatger.local_storage.config.config import Config
 from custom_components.heatger.local_storage.json_encoder.json_encoder import JsonEncoder
 from custom_components.heatger.shared.enum.state import State
@@ -29,6 +31,7 @@ class WSClient:
         self.server_url = Config(self.hass).get_ws_url()
         self.get_data = get_data_callback
         self.updated_data = updated_data_callback
+        self.config = None
 
     async def connect(self):
         """Connect to the server"""
@@ -68,6 +71,21 @@ class WSClient:
                 for key, value in data.get('state').items():
                     if self.updated_data:
                         await self.updated_data(key, State(value))
+            elif 'electric_meter' in data:
+                try:
+                    coordinator: SensorCoordinator = self.hass.data[DOMAIN]['em_coordinator']
+                    coordinator.async_set_updated_data(data)
+                except KeyError:
+                    pass
+            elif 'temperature' in data:
+                try:
+                    coordinator: SensorCoordinator = self.hass.data[DOMAIN]['temp_coordinator']
+                    coordinator.async_set_updated_data(data.get('temperature'))
+                except KeyError:
+                    pass
+            elif 'config' in data:
+                self.config = data.get('config')
+
         except TypeError:
             pass
 
@@ -77,6 +95,19 @@ class WSClient:
             await WSClient._ws.close()
         self._ws = None
         self.connected = False
+
+    async def get_config(self):
+        """return config from server"""
+        if self.config:
+            return self.config
+
+        await self.send_data('config')
+        retry = 0
+        while not self.config and retry < 20:
+            await asyncio.sleep(0.5)
+            retry += 1
+        return self.config
+
 
     async def _auto_reconnect(self):
         """try to reconnect to the server if disconnected"""
