@@ -20,7 +20,7 @@ jobs:
           sed -i 's/0.0.0/${{ steps.version.outputs.version }}/' custom_components/heatger/manifest.json
           
           cd custom_components/heatger/
-          zip ../../heatger.zip ./* -x '.*'
+          zip -r ../../heatger.zip ./* -x '.*'
       - uses: JasonEtco/upload-to-release@master
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
