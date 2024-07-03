@@ -27,7 +27,7 @@ class ScheduleDto:
 
     def to_value(self) -> int:
         """return a schedule in value, the bigger it is, the closer it is to the weekend"""
-        return self.day * 100 + self.hour.hour * 10 + self.hour.minute
+        return self.day * 10000 + self.hour.hour * 100 + self.hour.minute
 
     def to_object(self) -> {}:
         """return schedule into object"""

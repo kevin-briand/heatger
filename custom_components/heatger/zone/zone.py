@@ -97,11 +97,14 @@ class Zone(Base):
         if list_schedules is None or len(list_schedules) == 0:
             return None
 
+        current_schedule = ScheduleDto(datetime.now().weekday(), datetime.now().time(), State.ECO)
         next_schedule: Optional[ScheduleDto] = None
         for schedule in list_schedules:
-            schedule_date = Zone.get_next_day(schedule.day, schedule.hour)
-            if next_schedule is None or schedule_date < Zone.get_next_day(next_schedule.day, next_schedule.hour):
+            if current_schedule.to_value() < schedule.to_value():
                 next_schedule = schedule
+                break
+        if not next_schedule:
+            next_schedule = list_schedules[0]
         return next_schedule
 
     @staticmethod
@@ -205,7 +208,7 @@ class Zone(Base):
     async def get_zone_number(hass: HomeAssistant, topic: str) -> int:
         """Return the zone number, else -1"""
         zone_number = re.search(REGEX_FIND_NUMBER, topic)
-        if zone_number is None or not hasattr(await Config(hass).get_config(), f'{ZONE}{zone_number.group(0)}'):
+        if zone_number is None or not await Config(hass).get_zone(f'{ZONE}{zone_number.group(0)}'):
             return -1
         return int(zone_number.group(0))
 
