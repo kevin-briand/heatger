@@ -86,6 +86,8 @@ class Zone(Base):
 
         remaining_time = self.get_remaining_time_from_schedule(next_schedule)
 
+        Logs.info(self.zone_id, F'Selected schedule -> {next_schedule.to_object()}')
+
         self.next_state = next_schedule.state
         await self.timer.start(remaining_time, self.on_time_out)
         Logs.info(self.zone_id, F'next timeout in {str(remaining_time)}s')
@@ -97,7 +99,7 @@ class Zone(Base):
         if list_schedules is None or len(list_schedules) == 0:
             return None
 
-        current_schedule = ScheduleDto(datetime.now().weekday(), datetime.now().time(), State.ECO)
+        current_schedule = ScheduleDto(datetime.utcnow().weekday(), datetime.utcnow().time(), State.ECO)
         next_schedule: Optional[ScheduleDto] = None
         for schedule in list_schedules:
             if current_schedule.to_value() < schedule.to_value():
@@ -111,8 +113,7 @@ class Zone(Base):
     def get_remaining_time_from_schedule(schedule: ScheduleDto) -> int:
         """Return the remaining time between the next schedule and now"""
         schedule_date = Zone.get_next_day(schedule.day, schedule.hour)
-        Logs.info('TEST', int(schedule_date.timestamp() - datetime.now().timestamp()))
-        return int(schedule_date.timestamp() - datetime.now().timestamp())
+        return int(schedule_date.timestamp() - datetime.utcnow().timestamp())
 
     async def launch_ping(self) -> None:
         """Start users presence check"""

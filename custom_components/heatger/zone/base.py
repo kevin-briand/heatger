@@ -23,8 +23,8 @@ class Base(metaclass=abc.ABCMeta):
     @staticmethod
     def get_next_day(weekday: int, hour: time) -> datetime:
         """return a datetime"""
-        now = datetime.now()
-        actual_weekday = datetime.now().weekday()
+        now = datetime.utcnow()
+        actual_weekday = datetime.utcnow().weekday()
         if actual_weekday > weekday:
             next_day = (7 - actual_weekday) + weekday
         elif actual_weekday == weekday and \
@@ -34,7 +34,7 @@ class Base(metaclass=abc.ABCMeta):
             next_day = weekday - actual_weekday
 
         delta = timedelta(days=next_day)
-        result = datetime.fromtimestamp(datetime.now().timestamp() + delta.total_seconds())
+        result = datetime.fromtimestamp(datetime.utcnow().timestamp() + delta.total_seconds())
         return result.replace(hour=hour.hour, minute=hour.minute, second=0, microsecond=0)
 
     async def stop_loop(self):
