@@ -1,5 +1,6 @@
 from homeassistant.components import frontend
 from homeassistant.components import panel_custom
+from homeassistant.components.http import StaticPathConfig
 
 from custom_components.heatger import DOMAIN
 
@@ -7,11 +8,9 @@ from custom_components.heatger import DOMAIN
 async def async_register_panel(hass):
     url = F'custom_components/{DOMAIN}/frontend/dist/heatger-panel.js'
 
-    hass.http.register_static_path(
-        '/api/panel_custom/heatger',
-        url,
-        cache_headers=False
-    )
+    await hass.http.async_register_static_paths([
+        StaticPathConfig('/api/panel_custom/heatger',url, False)
+    ])
 
     await panel_custom.async_register_panel(
         hass,

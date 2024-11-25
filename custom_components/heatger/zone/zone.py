@@ -1,7 +1,7 @@
 """Zone class"""
 import re
 
-from datetime import datetime
+import datetime
 from typing import Optional, Dict
 
 from homeassistant.core import HomeAssistant
@@ -99,9 +99,10 @@ class Zone(Base):
         if list_schedules is None or len(list_schedules) == 0:
             return None
 
-        current_schedule = ScheduleDto(datetime.utcnow().weekday(), datetime.utcnow().time(), State.ECO)
+        current_schedule = ScheduleDto(datetime.datetime.now().weekday(), datetime.datetime.now().time(), State.ECO)
         next_schedule: Optional[ScheduleDto] = None
         for schedule in list_schedules:
+            Logs.info("DEBUG", F"current: {current_schedule.to_value()} - next: {schedule.to_value()}")
             if current_schedule.to_value() < schedule.to_value():
                 next_schedule = schedule
                 break
@@ -113,7 +114,7 @@ class Zone(Base):
     def get_remaining_time_from_schedule(schedule: ScheduleDto) -> int:
         """Return the remaining time between the next schedule and now"""
         schedule_date = Zone.get_next_day(schedule.day, schedule.hour)
-        return int(schedule_date.timestamp() - datetime.utcnow().timestamp())
+        return int(schedule_date.timestamp() - datetime.datetime.now().timestamp())
 
     async def launch_ping(self) -> None:
         """Start users presence check"""

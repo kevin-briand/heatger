@@ -1,7 +1,7 @@
 import { type CSSResultGroup, html, LitElement, type TemplateResult } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { type Prog } from '../api/prog/dto/prog'
-import { dayToStr, orderToStr, progFromUTC } from '../../utils/convert/convert';
+import { dayToStr, orderToStr } from '../../utils/convert/convert';
 import { localize } from '../../localize/localize'
 import { type HomeAssistant } from 'custom-card-helpers'
 import { style } from '../../style'
@@ -47,7 +47,7 @@ export class HeatgerProgTable extends LitElement {
                     </thead>
                     <tbody>
                     ${this.datas.map((value) => {
-                        return this.addRow(progFromUTC(value))
+                        return this.addRow(value)
                     })}
                     </tbody>
                 </table>

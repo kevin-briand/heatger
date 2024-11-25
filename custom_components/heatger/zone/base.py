@@ -1,6 +1,6 @@
 """Base class"""
 import abc
-from datetime import datetime, time, timedelta
+import datetime
 
 from custom_components.heatger.shared.timer.timer import Timer
 
@@ -21,10 +21,10 @@ class Base(metaclass=abc.ABCMeta):
         return self.timer.get_remaining_time()
 
     @staticmethod
-    def get_next_day(weekday: int, hour: time) -> datetime:
+    def get_next_day(weekday: int, hour: datetime.time) -> datetime:
         """return a datetime"""
-        now = datetime.utcnow()
-        actual_weekday = datetime.utcnow().weekday()
+        now = datetime.datetime.now()
+        actual_weekday = datetime.datetime.now().weekday()
         if actual_weekday > weekday:
             next_day = (7 - actual_weekday) + weekday
         elif actual_weekday == weekday and \
@@ -33,8 +33,8 @@ class Base(metaclass=abc.ABCMeta):
         else:
             next_day = weekday - actual_weekday
 
-        delta = timedelta(days=next_day)
-        result = datetime.fromtimestamp(datetime.utcnow().timestamp() + delta.total_seconds())
+        delta = datetime.timedelta(days=next_day)
+        result = datetime.datetime.fromtimestamp(datetime.datetime.now().timestamp() + delta.total_seconds())
         return result.replace(hour=hour.hour, minute=hour.minute, second=0, microsecond=0)
 
     async def stop_loop(self):

@@ -8,7 +8,6 @@ import { localize } from '../../localize/localize'
 import { style } from '../../style'
 import { heatgerGetZones } from '../websocket/ha-ws'
 import { heatgerAddProg, heatgerRemoveAllProg, heatgerRemoveProg } from '../api/ha-api'
-import { progToUTC } from '../../utils/convert/convert'
 import { type ZoneInfo } from '../websocket/dto/zone-info.dto'
 
 @customElement('heatger-prog-card')
@@ -44,13 +43,14 @@ export class HeatgerProgCard extends LitElement {
       }
     }
     const time = form.time.value
+    console.log(time);
     const state = parseInt(form.state.value)
     const zone = parseInt(form.zone.value)
     if (selectedDays.length === 0 || time === '') return
 
     const progs: Prog[] = []
     selectedDays.forEach((day) => {
-      progs.push(progToUTC({ day, hour: time, state }))
+      progs.push({ day, hour: time, state })
     })
     void heatgerAddProg(this.hass, `zone${zone}`, progs).then(() => {
       this.updateZonesData()
@@ -59,7 +59,7 @@ export class HeatgerProgCard extends LitElement {
 
   handleDelete (prog: Prog): void {
     const zoneNumber = this.currentTab + 1
-    void heatgerRemoveProg(this.hass, `zone${zoneNumber}`, progToUTC(prog)).then(() => {
+    void heatgerRemoveProg(this.hass, `zone${zoneNumber}`, prog).then(() => {
       this.updateZonesData()
     })
   }

@@ -1,5 +1,5 @@
 """Zone manager class"""
-from datetime import datetime
+import datetime
 from typing import Optional
 import voluptuous as vol
 
@@ -42,7 +42,6 @@ class ZoneManager:
             await self.init_zones_from_config_file()
         except KeyError:
             Logs.info('INIT', len(self.zones))
-            pass
 
     async def init_zones_from_config_file(self) -> None:
         """Initialize zones from config file"""
@@ -96,11 +95,11 @@ class ZoneManager:
             Logs.error(CLASSNAME, F'{State.FROSTFREE} - empty data')
             return
         try:
-            end_date = datetime.strptime(end_date, '%Y-%m-%dT%H:%M:%S.%fZ')
+            end_date = datetime.datetime.strptime(end_date, '%Y-%m-%dT%H:%M:%S.%fZ')
         except ValueError:
             Logs.error(CLASSNAME, F'{State.FROSTFREE} - invalid date format')
             return
-        if end_date > datetime.now():
+        if end_date > datetime.datetime.now():
             await self.frostfree.start(end_date)
         else:
             await self.frostfree.stop()
