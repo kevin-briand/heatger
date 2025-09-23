@@ -139,24 +139,24 @@ export class HeatgerProgCard extends LitElement {
                 </select>
               </div>
               <div class="flexRow flexRow-center">
-                <mwc-button @click="${this.handleAdd}" class="button" id="add">
+                <ha-button @click="${this.handleAdd}" class="button" id="add">
                   ${localize('panel.add', this.hass.language)}
-                </mwc-button>
-                <mwc-button @click="${this.handleDeleteAll}" class="button" id="deleteAll">
+                </ha-button>
+                <ha-button @click="${this.handleDeleteAll}" class="button" id="deleteAll">
                   ${localize('panel.deleteAll', this.hass.language)}
-                </mwc-button>
+                </ha-button>
               </div>
             </form>
 
             <ha-tab-bar>
               ${Object.keys(this.zonesData ?? {}).map((zone, index) => {
-                return html`<mwc-button
+                return html`<ha-button
                   class="tab"
                   @click="${() => {
                     this.switchTab(index)
                   }}"
                 >
-                  ${localize('zone', this.hass.language)} ${index + 1} (${this.zonesData[zone].name})</mwc-button
+                  ${localize('zone', this.hass.language)} ${index + 1} (${this.zonesData[zone].name})</ha-button
                 >`
               })}
             </ha-tab-bar>

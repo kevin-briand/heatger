@@ -18,7 +18,7 @@ export class HeatgerZonesTable extends LitElement {
         <td>${data.name}</td>
         <td>${id}</td>
         <td>
-          <mwc-button
+          <ha-button
             @click="${(event: MouseEvent) => {
               this.handleDelete(event, data.name)
             }}"
@@ -27,7 +27,7 @@ export class HeatgerZonesTable extends LitElement {
             .disabled="${this.disabled}"
           >
             ${localize('panel.delete', this.hass.language)}
-          </mwc-button>
+          </ha-button>
         </td>
       </tr>
     `

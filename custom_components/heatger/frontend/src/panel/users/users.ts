@@ -79,9 +79,9 @@ export class HeatgerUsersCard extends LitElement {
                 </select>
               </div>
               <div class="flexRow flexRow-center">
-                <mwc-button @click='${this.handleAdd}' class="button" id="add">
+                <ha-button @click='${this.handleAdd}' class="button" id="add">
                   ${localize('panel.add', this.hass.language)}
-                </mwc-button>
+                </ha-button>
               </div>
             </form>
             ${this.error}

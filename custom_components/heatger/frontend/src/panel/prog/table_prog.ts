@@ -19,9 +19,9 @@ export class HeatgerProgTable extends LitElement {
                 <td>${dayToStr(data.day, this.hass.language)}</td>
                 <td>${data.hour}</td>
                 <td>${orderToStr(data.state, this.hass.language)}</td>
-                <td><mwc-button @click='${(event: MouseEvent) => { this.handleDelete(event, data) }}' class="button" id="delete" .disabled="${this.disabled}">
+                <td><ha-button @click='${(event: MouseEvent) => { this.handleDelete(event, data) }}' class="button" id="delete" .disabled="${this.disabled}">
                     ${localize('panel.delete', this.hass.language)}
-                </mwc-button></td>
+                </ha-button></td>
             </tr>
         `
   }

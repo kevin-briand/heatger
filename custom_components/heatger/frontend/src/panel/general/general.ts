@@ -86,9 +86,9 @@ export class HeatgerGeneralCard extends LitElement {
                 <label for="zone">${localize('panel.general.name', this.hass.language)}</label>
                 <input type="text" id="zone" />
               </div>
-              <mwc-button @click="${this.handleAddZone}" class="button" id="addZone">
+              <ha-button @click="${this.handleAddZone}" class="button" id="addZone">
                 ${localize('panel.add', this.hass.language)}
-              </mwc-button>
+              </ha-button>
             </form>
             <heatger-zones-table
               .hass="${this.hass}"

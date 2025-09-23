@@ -17,9 +17,9 @@ export class HeatgerUsersTable extends LitElement {
             <tr>
                 <td>${this.hass.states[data].attributes.friendly_name}</td>
                 <td>${data}</td>
-                <td><mwc-button @click='${(event: MouseEvent) => { this.handleDelete(event, data) }}' class="button" id="delete" .disabled="${this.disabled}">
+                <td><ha-button @click='${(event: MouseEvent) => { this.handleDelete(event, data) }}' class="button" id="delete" .disabled="${this.disabled}">
                     ${localize('panel.delete', this.hass.language)}
-                </mwc-button></td>
+                </ha-button></td>
             </tr>
         `
   }
