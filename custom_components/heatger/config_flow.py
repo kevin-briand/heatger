@@ -10,7 +10,6 @@ from homeassistant import config_entries, exceptions
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN, IP, PORT
-from .local_storage.config.config import Config
 from .websocket.ws_client import WSClient
 
 _LOGGER = logging.getLogger(__name__)
@@ -26,21 +25,15 @@ async def validate_input(hass: HomeAssistant, data: dict) -> dict[str, Any]:
 
     Data has the keys from DATA_SCHEMA with values provided by the user.
     """
-    if not 0 < data[PORT] < 65535:
+    if not 0 < data[PORT] <= 65535:
         raise InvalidPort()
-    if len(data[IP]) == 0:
+    if len(data[IP].strip()) == 0:
         raise InvalidIp()
 
-    await Config(hass).get_config()
-
-    ws_client = WSClient(hass)
-    await ws_client.set_server_url(F"{data[IP]}:{data[PORT]}")
-    try:
-        await ws_client.connect()
-        await ws_client.disconnect()
-    except Exception as e:
-        _LOGGER.error(e)
+    ws_client = WSClient(hass, F"{data[IP].strip()}:{data[PORT]}")
+    if not await ws_client.connect():
         raise CannotConnect
+    await ws_client.disconnect()
 
     return {
         IP: F"{data[IP]}:{data[PORT]}",
@@ -51,7 +44,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow"""
 
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
@@ -64,17 +56,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 await validate_input(self.hass, user_input)
+                user_input[IP] = user_input[IP].strip()
                 return self.async_create_entry(title="Heatger", data=user_input)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
-            except InvalidIp or InvalidPort:
-                errors[IP] = 'invalid_address'
+            except (InvalidIp, InvalidPort):
+                errors["base"] = "invalid_address"
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
-
-        # if not await WSClient.discover_server():
-        #     errors["base"] = "cannot_connect"
 
         # If there is no user input or there were errors, show the form again, including any errors that were found
         # with the input.

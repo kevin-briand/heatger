@@ -6,8 +6,9 @@ toggle:
       selector:
         number:
           min: 1
-          max: 5
+          max: 99
           step: 1
+          mode: box
     type:
       example: "state"
       required: true

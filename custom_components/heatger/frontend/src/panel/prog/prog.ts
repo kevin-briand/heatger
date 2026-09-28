@@ -43,16 +43,15 @@ export class HeatgerProgCard extends LitElement {
       }
     }
     const time = form.time.value
-    console.log(time);
     const state = parseInt(form.state.value)
-    const zone = parseInt(form.zone.value)
-    if (selectedDays.length === 0 || time === '') return
+    const zoneId: string = form.zone.value
+    if (selectedDays.length === 0 || time === '' || zoneId === '') return
 
     const progs: Prog[] = []
     selectedDays.forEach((day) => {
       progs.push({ day, hour: time, state })
     })
-    void heatgerAddProg(this.hass, `zone${zone}`, progs).then(() => {
+    void heatgerAddProg(this.hass, zoneId, progs).then(() => {
       this.updateZonesData()
     })
   }
@@ -134,8 +133,9 @@ export class HeatgerProgCard extends LitElement {
               <div class="flexRow">
                 <label for="zone">${localize('zone', this.hass.language)}</label>
                 <select name="zone" id="zone">
-                  <option value="1">${localize('zone', this.hass.language)} 1</option>
-                  <option value="2">${localize('zone', this.hass.language)} 2</option>
+                  ${Object.keys(this.zonesData ?? {}).map((zoneId, index) => {
+                    return html`<option value="${zoneId}">${localize('zone', this.hass.language)} ${index + 1} (${this.zonesData[zoneId].name})</option>`
+                  })}
                 </select>
               </div>
               <div class="flexRow flexRow-center">

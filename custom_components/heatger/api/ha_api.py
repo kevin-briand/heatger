@@ -1,3 +1,6 @@
+from functools import wraps
+from http import HTTPStatus
+
 from homeassistant.components.http.data_validator import RequestDataValidator
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.http import HomeAssistantView
@@ -7,11 +10,27 @@ import voluptuous as vol
 from custom_components.heatger import const as c
 from custom_components.heatger.zone.zone_manager import ZoneManager
 from custom_components.heatger.local_storage.config.config import Config
+from custom_components.heatger.local_storage.errors.local_storage_error import LocalStorageError
 from custom_components.heatger.shared.enum.state import State
 from custom_components.heatger.shared.logs.logs import Logs
 from custom_components.heatger.zone.dto.schedule_dto import ScheduleDto
 
 DAYS = [0, 1, 2, 3, 4, 5, 6]
+STATES = [state.value for state in State]
+
+
+def handle_errors(func):
+    """Return a clean json error instead of a 500 error"""
+    @wraps(func)
+    async def wrapper(view: HomeAssistantView, request, *args, **kwargs):
+        if request.app["hass"].data.get(c.DOMAIN, {}).get('zone_manager') is None:
+            return view.json_message('Heatger is not loaded', HTTPStatus.SERVICE_UNAVAILABLE)
+        try:
+            return await func(view, request, *args, **kwargs)
+        except LocalStorageError as e:
+            Logs.error('API', e)
+            return view.json_message(str(e), HTTPStatus.BAD_REQUEST)
+    return wrapper
 
 
 class HeatgerAddProgView(HomeAssistantView):
@@ -30,13 +49,14 @@ class HeatgerAddProgView(HomeAssistantView):
                         {
                             vol.Required('day'): vol.In(DAYS),
                             vol.Required('hour'): cv.string,
-                            vol.Required('state'): vol.In(State)
+                            vol.Required('state'): vol.In(STATES)
                         }
                     ]
                 )
             }
         )
     )
+    @handle_errors
     async def post(self, request, data):
         hass = request.app["hass"]
         await Config(hass).add_schedules(data['zone_id'], ScheduleDto.from_array(data['prog']))
@@ -59,12 +79,13 @@ class HeatgerRemoveProgView(HomeAssistantView):
                     {
                         vol.Required('day'): vol.In(DAYS),
                         vol.Required('hour'): cv.string,
-                        vol.Required('state'): vol.In(State)
+                        vol.Required('state'): vol.In(STATES)
                     }
                 )
             }
         )
     )
+    @handle_errors
     async def post(self, request, data):
         hass = request.app["hass"]
         await Config(hass).remove_schedule(data['zone_id'], ScheduleDto.from_dict(data['prog']))
@@ -86,6 +107,7 @@ class HeatgerRemoveAllProgView(HomeAssistantView):
             }
         )
     )
+    @handle_errors
     async def post(self, request, data):
         hass = request.app["hass"]
         await Config(hass).remove_all_schedule(data['zone_id'])
@@ -107,6 +129,7 @@ class HeatgerAddUserView(HomeAssistantView):
             }
         )
     )
+    @handle_errors
     async def post(self, request, data):
         hass = request.app["hass"]
         await Config(hass).add_user(data['user'])
@@ -126,6 +149,7 @@ class HeatgerRemoveUserView(HomeAssistantView):
             }
         )
     )
+    @handle_errors
     async def post(self, request, data):
         hass = request.app["hass"]
         await Config(hass).remove_user(data['user'])
@@ -145,10 +169,10 @@ class HeatgerAddZoneView(HomeAssistantView):
             }
         )
     )
+    @handle_errors
     async def post(self, request, data):
         hass = request.app["hass"]
         await Config(hass).add_zone(data['zone'])
-        Logs.info('CONFIG', hass.data.get(c.DOMAIN))
         manager: ZoneManager = hass.data.get(c.DOMAIN)['zone_manager']
         await manager.init_zones()
         return self.json({"success": True})
@@ -167,6 +191,7 @@ class HeatgerRemoveZoneView(HomeAssistantView):
             }
         )
     )
+    @handle_errors
     async def post(self, request, data):
         hass: HomeAssistant = request.app["hass"]
         await Config(hass).remove_zone(data['zone'])
@@ -188,6 +213,7 @@ class HeatgerActivateFrostfreeView(HomeAssistantView):
             }
         )
     )
+    @handle_errors
     async def post(self, request, data):
         hass: HomeAssistant = request.app["hass"]
         manager: ZoneManager = hass.data[c.DOMAIN]['zone_manager']
@@ -201,6 +227,7 @@ class HeatgerDeactivateFrostfreeView(HomeAssistantView):
     url = "/api/heatger/frostfree/deactivate"
     name = "api:heatger:frostfree:deactivate"
 
+    @handle_errors
     async def post(self, request):
         hass: HomeAssistant = request.app["hass"]
         manager: ZoneManager = hass.data[c.DOMAIN]['zone_manager']

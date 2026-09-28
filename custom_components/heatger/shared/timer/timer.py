@@ -1,42 +1,55 @@
 """Timer class"""
-import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import Awaitable, Callable, Optional
+
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.event import async_track_point_in_utc_time
+from homeassistant.util import dt as dt_util
 
 
 class Timer:
-    """Provide a timer"""
-    def __init__(self):
-        self.time_start = None
-        self.timeout = None
-        self.timer_task = None
+    """Provide a one-shot timer based on the Home Assistant scheduler.
 
-    async def start(self, timeout, on_timeout_callback):
+    The deadline is an absolute point in time, so the timer is not affected by
+    long sleeps, clock adjustments or daylight saving time changes.
+    """
+
+    def __init__(self, hass: HomeAssistant):
+        self.hass = hass
+        self._unsub: Optional[Callable[[], None]] = None
+        self._end: Optional[datetime] = None
+
+    async def start(self, timeout: float, on_timeout_callback: Callable[[], Awaitable[None]]) -> None:
         """start timer with timeout in seconds, on timeout call on_timeout_callback"""
-        await self.stop()
-        self.time_start = datetime.now().timestamp()
-        self.timeout = timeout
+        await self.start_at(dt_util.utcnow() + timedelta(seconds=max(timeout, 0)), on_timeout_callback)
 
-        async def timer():
-            await asyncio.sleep(self.timeout)
+    async def start_at(self, when: datetime, on_timeout_callback: Callable[[], Awaitable[None]]) -> None:
+        """start timer that fires at the given (timezone aware) datetime"""
+        await self.stop()
+        self._end = dt_util.as_utc(when)
+
+        async def _fire(_now: datetime) -> None:
+            # the timer is over: clear it before calling the callback, so the
+            # callback can safely start a new timer
+            self._unsub = None
+            self._end = None
             await on_timeout_callback()
 
-        self.timer_task = asyncio.create_task(timer())
+        self._unsub = async_track_point_in_utc_time(self.hass, _fire, self._end)
 
-    async def stop(self):
+    async def stop(self) -> None:
         """stop timer"""
-        if self.timer_task is None:
-            return
-        self.timer_task.cancel()
-        try:
-            await self.timer_task
-        except asyncio.CancelledError:
-            pass
-        self.timer_task = None
-        self.time_start = None
-        self.timeout = None
+        if self._unsub is not None:
+            self._unsub()
+        self._unsub = None
+        self._end = None
+
+    def is_running(self) -> bool:
+        """return True if the timer is running"""
+        return self._end is not None
 
     def get_remaining_time(self) -> int:
-        """return the remaining time before timeout"""
-        if self.timeout is None or self.time_start is None:
+        """return the remaining time before timeout in seconds, -1 if not running"""
+        if self._end is None:
             return -1
-        return int(self.timeout - (datetime.now().timestamp() - self.time_start))
+        return max(int((self._end - dt_util.utcnow()).total_seconds()), 0)

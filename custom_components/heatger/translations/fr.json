@@ -1,20 +1,22 @@
 {
-    "config": {
-        "abort": {
-            "single_instance_allowed": "Une seule instance de l'intégration possible"
-        },
-        "error": {
-            "cannot_connect": "Echec de connexion, vérifiez votre ip et port"
-        },
-        "step": {
-            "user": {
-                "data": {
-                  "ip": "Ip",
-                  "port": "Port"
-                }
-            }
+  "config": {
+    "abort": {
+      "single_instance_allowed": "Une seule instance de l'intégration possible"
+    },
+    "error": {
+      "cannot_connect": "Echec de connexion, vérifiez votre ip et port",
+      "invalid_address": "Ip ou port invalide",
+      "unknown": "Erreur inattendue"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "ip": "Ip",
+          "port": "Port"
         }
-   },
+      }
+    }
+  },
   "services": {
     "toggle": {
       "name": "Toggle",

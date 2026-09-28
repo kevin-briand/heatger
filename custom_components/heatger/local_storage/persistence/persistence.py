@@ -2,6 +2,8 @@
 from datetime import datetime
 from typing import Optional
 
+from homeassistant.util import dt as dt_util
+
 from custom_components.heatger.local_storage.persistence.dto.persistence_dto import PersistenceDto
 from custom_components.heatger.local_storage.local_storage import LocalStorage
 from custom_components.heatger.shared.enum.mode import Mode
@@ -30,7 +32,7 @@ class Persistence(LocalStorage):
         if self.persist is not None:
             return self.persist
         try:
-            self.persist = PersistenceDto(**await self._read())
+            self.persist = PersistenceDto(**(await self._read()))
         except TypeError:
             self.persist = PersistenceDto([], '')
             await self.__save_in_file()
@@ -80,15 +82,35 @@ class Persistence(LocalStorage):
         await self.__save_in_file()
 
     async def set_frost_free_end_date(self, end_date: datetime = None) -> None:
-        """update the frost-free end date"""
+        """update the frost-free end date (stored in local time)"""
         if not end_date:
             self.persist.frost_free = ''
         else:
-            self.persist.frost_free = end_date.strftime('%Y-%m-%d %H:%M')
+            self.persist.frost_free = dt_util.as_local(end_date).strftime('%Y-%m-%d %H:%M')
         await self.__save_in_file()
 
     def get_frost_free_end_date(self) -> Optional[datetime]:
-        """return the current frost-free end date"""
-        if self.persist.frost_free == '':
+        """return the current frost-free end date (timezone aware, local time)"""
+        if not self.persist.frost_free:
             return None
-        return datetime.strptime(self.persist.frost_free, '%Y-%m-%d %H:%M')
+        try:
+            end_date = datetime.strptime(self.persist.frost_free, '%Y-%m-%d %H:%M')
+        except ValueError:
+            return None
+        return end_date.replace(tzinfo=dt_util.now().tzinfo)
+
+    async def remove_zone(self, zone_id: str) -> None:
+        """remove the zone and shift the following zones ids (zone3 -> zone2...),
+        as the zones are renumbered in the config"""
+        prefix = 'zone'
+        removed_number = int(zone_id[len(prefix):])
+        zones_list = []
+        for zone in self.persist.zones:
+            number = int(zone.zone_id[len(prefix):]) if zone.zone_id[len(prefix):].isdigit() else None
+            if number == removed_number:
+                continue
+            if number is not None and number > removed_number:
+                zone.zone_id = F'{prefix}{number - 1}'
+            zones_list.append(zone)
+        self.persist.zones = zones_list
+        await self.__save_in_file()

@@ -94,7 +94,6 @@ export class HeatgerGeneralCard extends LitElement {
               .hass="${this.hass}"
               .rowClicked="${this.handleDelete.bind(this)}"
             ></heatger-zones-table>
-            <h2
           </div>
         </div>
       </ha-card>

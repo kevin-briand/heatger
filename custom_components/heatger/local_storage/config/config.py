@@ -8,6 +8,7 @@ from custom_components.heatger.local_storage.config.errors.schedule_not_valid_er
 from custom_components.heatger.local_storage.config.errors.zone_not_found_error import ZoneNotFoundError
 from custom_components.heatger.local_storage.errors.missing_arg_error import MissingArgError
 from custom_components.heatger.local_storage.local_storage import LocalStorage
+from custom_components.heatger.local_storage.persistence.persistence import Persistence
 from custom_components.heatger.zone.dto.schedule_dto import ScheduleDto
 from custom_components.heatger.zone.dto.zone_dto import ZoneDto
 
@@ -26,6 +27,7 @@ class Config(LocalStorage):
         if Config._initialized:
             return
         super().__init__(hass, 'config')
+        self.hass = hass
         self.data: Optional[ConfigDto] = None
         Config._initialized = True
 
@@ -53,19 +55,18 @@ class Config(LocalStorage):
         if user == '':
             return
         config = await self.get_config()
-        users = config.users
-        users_list = users
-        if not all(user_in_list != user for user_in_list in users_list):
-            raise AlreadyExistError(user.ip)
+        if user in config.users:
+            raise AlreadyExistError(user)
 
-        users_list.append(user)
+        config.users.append(user)
         await self.__save_data(config)
 
     async def remove_user(self, user) -> None:
         """Remove user from scanned users list"""
         config = await self.get_config()
-        users = config.users
-        users.remove(user)
+        if user not in config.users:
+            return
+        config.users.remove(user)
         await self.__save_data(config)
 
     async def add_schedule(self, zone_id: str, schedule: ScheduleDto) -> None:
@@ -108,8 +109,9 @@ class Config(LocalStorage):
             raise ZoneNotFoundError(zone_id)
 
         config = await self.get_config()
-        zone = config.zones[zone_id]
-        prog = zone.prog
+        prog = config.zones[zone_id].prog
+        if schedule not in prog:
+            return
         prog.remove(schedule)
         await self.__save_data(config)
 
@@ -118,40 +120,35 @@ class Config(LocalStorage):
         if not await self.__is_zone_exist(zone_id):
             raise ZoneNotFoundError(zone_id)
         config = await self.get_config()
-        zone = config.zones[zone_id]
-        prog = zone.prog
-        prog.clear()
-        zone.prog = prog
-
-        setattr(await self.get_config(), zone_id, zone)
+        config.zones[zone_id].prog.clear()
         await self.__save_data(config)
 
     async def add_zone(self, name: str) -> None:
-        """"""
+        """Add a new zone at the end of the zones list"""
         if name == '':
             return
         config = await self.get_config()
-        for [key, zone] in config.zones.items():
+        for zone in config.zones.values():
             if zone.name == name:
-                return
+                raise AlreadyExistError(name)
 
-        config.zones[F'zone{len(config.zones.items())+1}'] = ZoneDto(name, True, [])
+        config.zones[F'zone{len(config.zones) + 1}'] = ZoneDto(name, True, [])
 
         await self.__save_data(config)
 
     async def remove_zone(self, name: str) -> None:
-        """"""
+        """Remove a zone, the following zones are renumbered (zone3 -> zone2...)"""
         if name == '':
             return
         config = await self.get_config()
-        zone_id = ''
-        config.zones.items()
-        for [key, zone] in config.zones.items():
-            if zone.name == name:
-                zone_id = key
+        zone_id = next((key for key, zone in config.zones.items() if zone.name == name), None)
+        if zone_id is None:
+            raise ZoneNotFoundError(name)
         config.zones.pop(zone_id)
+        config.zones = {F'zone{i + 1}': zone for i, zone in enumerate(config.zones.values())}
         await self.__save_data(config)
-        self.data = None
+        # keep the states/modes of the zones consistent with the new numbers
+        await Persistence(self.hass).remove_zone(zone_id)
 
     async def __is_zone_exist(self, zone_id: str) -> bool:
         """Return True if the zone exists in the config file"""
@@ -168,13 +165,3 @@ class Config(LocalStorage):
         if not await self.__is_zone_exist(zone_id):
             raise ZoneNotFoundError(zone_id)
         return (await self.get_config()).zones[zone_id]
-
-    def get_ws_url(self):
-        """return the url of ws server"""
-        return self.data.ws_url if self.data and hasattr(self.data, 'ws_url') else None
-
-    async def set_ws_url(self, ip):
-        """set the url of ws server"""
-        config = self.data
-        config.ws_url = F'http://{ip}'
-        await self.__save_data(config)

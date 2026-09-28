@@ -23,7 +23,7 @@ features include :
 To install this integration, follow these steps.
 - add the custom_components folder into the home assistant config folder
 - go to Settings > Devices & services > add integration
-- select Massa Node
+- select Heatger
 - fill out the form
 
 ## Use

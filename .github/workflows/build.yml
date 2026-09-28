@@ -15,12 +15,22 @@ jobs:
         id: version
         uses: home-assistant/actions/helpers/version@master
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build frontend
+        working-directory: custom_components/heatger/frontend
+        run: |
+          npm ci
+          npm run build
+
       - name: Patch manifest and zip
         run: |
           sed -i 's/0.0.0/${{ steps.version.outputs.version }}/' custom_components/heatger/manifest.json
           
           cd custom_components/heatger/
-          zip -r ../../heatger.zip ./* -x '.*'
+          zip -r ../../heatger.zip ./* -x '.*' 'frontend/node_modules/*' 'frontend/src/*' 'frontend/tmpdir/*' '*/__pycache__/*'
       - uses: JasonEtco/upload-to-release@master
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}

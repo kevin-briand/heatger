@@ -3,158 +3,200 @@ import asyncio
 import json
 import logging
 import socket
-from typing import Optional, Callable, Coroutine
+from typing import Any, Awaitable, Callable, Optional
 
 import aiohttp
-from aiohttp import ClientWebSocketResponse, WSMessage
-from homeassistant.core import HomeAssistant
+from aiohttp import ClientWebSocketResponse
+from homeassistant.core import HomeAssistant, CALLBACK_TYPE
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.event import async_call_later
 
 from custom_components.heatger.const import DOMAIN
-from custom_components.heatger.coordinator import SensorCoordinator
-from custom_components.heatger.local_storage.config.config import Config
 from custom_components.heatger.local_storage.json_encoder.json_encoder import JsonEncoder
 from custom_components.heatger.shared.enum.state import State
-from custom_components.heatger.shared.timer.timer import Timer
 
 _LOGGER = logging.getLogger(__name__)
+
+CONNECT_TIMEOUT = 10
+RECONNECT_DELAY = 30
+CONFIG_TIMEOUT = 10
 
 
 class WSClient:
     """WebSocket Client: used to connect to the heatger server"""
-    _ws: Optional[ClientWebSocketResponse] = None
+    # client used by the zones to send their states (see set_status)
+    _main: Optional['WSClient'] = None
 
-    def __init__(self, hass: HomeAssistant,
-                 get_data_callback: Callable[[], Coroutine[any, None, int]] = None,
-                 updated_data_callback: Callable[[str, State], Coroutine[None, None, int]] = None):
+    def __init__(self, hass: HomeAssistant, server_address: str,
+                 get_data_callback: Callable[[], Awaitable[Any]] = None,
+                 updated_data_callback: Callable[[str, State], Awaitable[Any]] = None):
+        """
+        :param server_address: address of the server: ip:port
+        """
         self.hass = hass
-        self.connected = False
-        self.server_url = Config(self.hass).get_ws_url()
+        self.server_url = F'http://{server_address}'
         self.get_data = get_data_callback
         self.updated_data = updated_data_callback
         self.config = None
+        self._config_received = asyncio.Event()
+        self._ws: Optional[ClientWebSocketResponse] = None
+        self._listen_task: Optional[asyncio.Task] = None
+        self._reconnect_unsub: Optional[CALLBACK_TYPE] = None
+        self._closing = False
 
-    async def connect(self):
-        """Connect to the server"""
-        client = aiohttp.ClientSession()
+    @property
+    def connected(self) -> bool:
+        """return True if connected to the server"""
+        return self._ws is not None and not self._ws.closed
+
+    def set_as_main(self) -> None:
+        """Use this client to send the zones states"""
+        WSClient._main = self
+
+    async def connect(self) -> bool:
+        """Connect to the server, return True on success"""
+        self._closing = False
+        session = async_get_clientsession(self.hass)
         try:
-            ws = await client.ws_connect(f'{self.server_url}/ws')
-            asyncio.create_task(self.events())
-            WSClient._ws = ws
-            return True
-        except Exception as e:
-            _LOGGER.error(e)
-            self.connected = False
-            if WSClient._ws:
-                await WSClient._ws.close()
-                WSClient._ws = None
-            await client.close()
-        return False
+            async with asyncio.timeout(CONNECT_TIMEOUT):
+                self._ws = await session.ws_connect(f'{self.server_url}/ws', heartbeat=30)
+        except (aiohttp.ClientError, TimeoutError, OSError) as e:
+            _LOGGER.warning('Unable to connect to the heatger server %s: %s', self.server_url, e)
+            self._ws = None
+            return False
+        self._listen_task = self.hass.async_create_background_task(self._listen(self._ws), f'{DOMAIN}_ws_listen')
+        _LOGGER.info('Connected to the heatger server %s', self.server_url)
+        return True
 
-    async def events(self):
+    async def _listen(self, ws: ClientWebSocketResponse) -> None:
         """run loop for waiting message from server"""
-        self.connected = True
-        while self.connected:
-            msg: WSMessage = await WSClient._ws.receive()
-            if msg.type in (aiohttp.WSMsgType.CLOSED,
-                            aiohttp.WSMsgType.ERROR):
-                self.connected = False
-                await WSClient._ws.close()
-                await self._auto_reconnect()
-            else:
-                await self.eval_message(msg.data)
+        try:
+            async for msg in ws:
+                if msg.type == aiohttp.WSMsgType.TEXT:
+                    await self.eval_message(msg.data)
+                elif msg.type == aiohttp.WSMsgType.ERROR:
+                    _LOGGER.warning('Heatger server connection error: %s', ws.exception())
+                    break
+        except asyncio.CancelledError:
+            raise
+        except Exception:  # pylint: disable=broad-except
+            _LOGGER.exception('Unexpected error on the heatger server connection')
+        finally:
+            if not ws.closed:
+                await ws.close()
+            if self._ws is ws:
+                self._ws = None
+        if not self._closing:
+            _LOGGER.warning('Disconnected from the heatger server, trying to reconnect')
+            await self._reconnect()
 
-    async def eval_message(self, data: any):
+    async def eval_message(self, data: Any):
         """Evaluate the message from the server"""
         try:
             data = json.loads(data)
+            if not isinstance(data, dict):
+                return
             if 'state' in data:
                 for key, value in data.get('state').items():
                     if self.updated_data:
                         await self.updated_data(key, State(value))
             elif 'electric_meter' in data:
-                try:
-                    coordinator: SensorCoordinator = self.hass.data[DOMAIN]['em_coordinator']
+                coordinator = self.hass.data.get(DOMAIN, {}).get('em_coordinator')
+                if coordinator:
                     coordinator.async_set_updated_data(data)
-                except KeyError:
-                    pass
             elif 'temperature' in data:
-                try:
-                    coordinator: SensorCoordinator = self.hass.data[DOMAIN]['temp_coordinator']
+                coordinator = self.hass.data.get(DOMAIN, {}).get('temp_coordinator')
+                if coordinator:
                     coordinator.async_set_updated_data(data.get('temperature'))
-                except KeyError:
-                    pass
             elif 'config' in data:
                 self.config = data.get('config')
-
-        except TypeError:
-            pass
+                self._config_received.set()
+        except (ValueError, TypeError, KeyError, AttributeError) as e:
+            # ValueError includes invalid json and unknown state
+            _LOGGER.warning('Invalid message received from the heatger server: %s (%s)', data, e)
 
     async def disconnect(self):
-        """Disconnect from the server"""
-        async with asyncio.timeout(10):
-            await WSClient._ws.close()
+        """Disconnect from the server (no automatic reconnection)"""
+        self._closing = True
+        if self._reconnect_unsub:
+            self._reconnect_unsub()
+            self._reconnect_unsub = None
+        if self._ws is not None:
+            try:
+                async with asyncio.timeout(10):
+                    await self._ws.close()
+            except TimeoutError:
+                pass
         self._ws = None
-        self.connected = False
+        if self._listen_task and not self._listen_task.done():
+            self._listen_task.cancel()
+        self._listen_task = None
+        if WSClient._main is self:
+            WSClient._main = None
 
     async def get_config(self):
-        """return config from server"""
+        """return config from server, None if the server doesn't respond"""
         if self.config:
             return self.config
+        if not self.connected:
+            return None
 
+        self._config_received.clear()
         await self.send_data('config')
-        retry = 0
-        while not self.config and retry < 20:
-            await asyncio.sleep(0.5)
-            retry += 1
+        try:
+            async with asyncio.timeout(CONFIG_TIMEOUT):
+                await self._config_received.wait()
+        except TimeoutError:
+            _LOGGER.warning('The heatger server did not send its config')
         return self.config
 
-
-    async def _auto_reconnect(self):
-        """try to reconnect to the server if disconnected"""
-        if not await self.connect() and not self.connected:
-            await Timer().start(30, self._auto_reconnect)
-        else:
+    async def _reconnect(self, _now=None) -> None:
+        """try to reconnect to the server, retry later on failure"""
+        self._reconnect_unsub = None
+        if self._closing:
+            return
+        if await self.connect():
             if self.get_data:
                 await self.send_data(await self.get_data())
+        else:
+            self._reconnect_unsub = async_call_later(self.hass, RECONNECT_DELAY, self._reconnect)
 
     @staticmethod
     async def set_status(zone: str, status: State):
-        """update the status in the zone"""
+        """send the state of the zone to the server"""
         if not status:
             return
-        if not WSClient._ws:
+        client = WSClient._main
+        if client is None or not client.connected:
             return
-        await WSClient.send_data({'state': {zone: status}})
+        await client.send_data({'state': {zone: status}})
 
-    @staticmethod
-    async def send_data(data: any):
+    async def send_data(self, data: Any):
         """send data to the server"""
-        await WSClient._ws.send_json(data, dumps=lambda obj: json.dumps(obj, cls=JsonEncoder))
-
-    async def set_server_url(self, url: str):
-        """Set and store the url to the server"""
-        self.server_url = F'http://{url}'
-        await Config(self.hass).set_ws_url(url)
+        if not self.connected:
+            return
+        await self._ws.send_json(data, dumps=lambda obj: json.dumps(obj, cls=JsonEncoder))
 
     @staticmethod
     async def discover_server():
-        loop = asyncio.get_event_loop()
+        """Find the server on the local network (UDP broadcast)"""
+        loop = asyncio.get_running_loop()
         udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         udp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        udp_sock.setblocking(False)  # Set socket to non-blocking mode
+        udp_sock.setblocking(False)
 
         message = 'Heatger'
-        _LOGGER.info(udp_sock.sendto(message.encode(), ('192.168.1.255', 5001)))
-        _LOGGER.info("Message de broadcast envoyé sur le port 5001")
+        udp_sock.sendto(message.encode(), ('192.168.1.255', 5001))
+        _LOGGER.debug("Broadcast message sent on port 5001")
 
         success = False
         try:
-            data, addr = await asyncio.wait_for(loop.sock_recv(udp_sock, 1024), timeout=5)
-            _LOGGER.info(f"Réponse du serveur {addr}: {data.decode()}")
+            data, addr = await asyncio.wait_for(loop.sock_recvfrom(udp_sock, 1024), timeout=5)
+            _LOGGER.debug("Server response %s: %s", addr, data.decode())
             if data.decode() == 'OK':
                 success = True
         except asyncio.TimeoutError:
-            _LOGGER.info("Aucune réponse du serveur")
+            _LOGGER.debug("No response from the server")
         finally:
             udp_sock.close()
 
