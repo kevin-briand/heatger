@@ -36,7 +36,9 @@ export class HeatgerZoneEditor extends LitElement {
   @state() private saving = false
 
   protected willUpdate (changed: PropertyValues): void {
-    if (changed.has('zone')) {
+    // a new draft only for another zone: the data of the panel can be read again while editing
+    const previous = changed.get('zone') as ZoneConfig | undefined
+    if (changed.has('zone') && (this.draft === undefined || previous === undefined || previous.id !== this.zone.id)) {
       this.draft = clone(this.zone)
       this.errors = []
     }

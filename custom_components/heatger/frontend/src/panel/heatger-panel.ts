@@ -72,10 +72,8 @@ export class HeatgerPanel extends LitElement {
 
   /** a change of zone reloads heatger: every card reads its data again */
   reload (): void {
-    const children: NodeListOf<LitElement> | undefined = this.shadowRoot?.querySelectorAll('.card')
-    if (children === undefined) return
-    children.forEach(el => {
-      el.requestUpdate('panel')
+    this.shadowRoot?.querySelectorAll('.card').forEach((el) => {
+      (el as HTMLElement & { refresh?: () => void }).refresh?.()
     })
   }
 

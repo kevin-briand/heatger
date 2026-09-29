@@ -1,4 +1,4 @@
-import { css, type CSSResultGroup, html, LitElement, nothing, type PropertyDeclaration, type TemplateResult } from 'lit'
+import { css, type CSSResultGroup, html, LitElement, nothing, type TemplateResult } from 'lit'
 import { type HomeAssistant, type Panel } from 'custom-card-helpers'
 import { customElement, property, state } from 'lit/decorators.js'
 import './zone_editor'
@@ -79,9 +79,9 @@ export class HeatgerGeneralCard extends LitElement {
     if (saved) this.afterReload()
   }
 
-  requestUpdate (name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
-    super.requestUpdate(name, oldValue, options)
-    if (name === 'panel') this.updateZonesData()
+  /** read the data again (called by the panel after a reload of heatger) */
+  refresh (): void {
+    this.updateZonesData()
   }
 
   private actuatorChip (actuator: ActuatorConfig): TemplateResult<1> {

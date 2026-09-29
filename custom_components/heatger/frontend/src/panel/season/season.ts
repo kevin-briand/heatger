@@ -1,4 +1,4 @@
-import { css, type CSSResultGroup, html, LitElement, nothing, type PropertyDeclaration, type TemplateResult } from 'lit'
+import { css, type CSSResultGroup, html, LitElement, nothing, type TemplateResult } from 'lit'
 import { type HomeAssistant, type Panel } from 'custom-card-helpers'
 import { customElement, property, state } from 'lit/decorators.js'
 import { localize } from '../../localize/localize'
@@ -35,9 +35,9 @@ export class HeatgerSeasonCard extends LitElement {
     }).catch((e: Error) => { this.error = e.message })
   }
 
-  requestUpdate (name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
-    super.requestUpdate(name, oldValue, options)
-    if (name === 'panel') this.updateData()
+  /** read the data again (called by the panel after a reload of heatger) */
+  refresh (): void {
+    this.updateData()
   }
 
   private setSeason (data: Record<string, string>): void {
