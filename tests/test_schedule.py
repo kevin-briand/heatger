@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 
 from custom_components.heatger.shared.enum.state import State
 from custom_components.heatger.zone.base import Base
-from custom_components.heatger.zone.dto.schedule_dto import ScheduleDto
+from custom_components.heatger.models import Schedule
 from custom_components.heatger.zone.zone import Zone
 
 PARIS = ZoneInfo('Europe/Paris')
@@ -34,29 +34,29 @@ def test_next_day_across_dst_change():
 
 
 SCHEDULES = [
-    ScheduleDto(0, datetime.time(7, 0), State.COMFORT),
-    ScheduleDto(0, datetime.time(22, 0), State.ECO),
-    ScheduleDto(4, datetime.time(7, 0), State.COMFORT),
-    ScheduleDto(4, datetime.time(22, 0), State.ECO),
+    Schedule(0, datetime.time(7, 0), State.COMFORT),
+    Schedule(0, datetime.time(22, 0), State.ECO),
+    Schedule(4, datetime.time(7, 0), State.COMFORT),
+    Schedule(4, datetime.time(22, 0), State.ECO),
 ]
 
 
 def test_find_next_schedule():
-    now = ScheduleDto(0, datetime.time(12, 0), State.ECO)
+    now = Schedule(0, datetime.time(12, 0), State.ECO)
     assert Zone.find_next_schedule(SCHEDULES, now) == SCHEDULES[1]
     # after the last schedule of the week: loop to the first one
-    now = ScheduleDto(6, datetime.time(12, 0), State.ECO)
+    now = Schedule(6, datetime.time(12, 0), State.ECO)
     assert Zone.find_next_schedule(SCHEDULES, now) == SCHEDULES[0]
     assert Zone.find_next_schedule([], now) is None
 
 
 def test_find_current_schedule():
-    now = ScheduleDto(0, datetime.time(12, 0), State.ECO)
+    now = Schedule(0, datetime.time(12, 0), State.ECO)
     assert Zone.find_current_schedule(SCHEDULES, now) == SCHEDULES[0]
     # exactly at the schedule time
-    now = ScheduleDto(4, datetime.time(22, 0), State.ECO)
+    now = Schedule(4, datetime.time(22, 0), State.ECO)
     assert Zone.find_current_schedule(SCHEDULES, now) == SCHEDULES[3]
     # before the first schedule of the week: the last one of previous week applies
-    now = ScheduleDto(0, datetime.time(6, 0), State.ECO)
+    now = Schedule(0, datetime.time(6, 0), State.ECO)
     assert Zone.find_current_schedule(SCHEDULES, now) == SCHEDULES[3]
     assert Zone.find_current_schedule([], now) is None

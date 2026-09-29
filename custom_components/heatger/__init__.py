@@ -7,28 +7,29 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from .api.ha_api import async_register_api
-from .const import DOMAIN, IP, PORT
-from .local_storage.config.config import Config
-from .local_storage.persistence.persistence import Persistence
+from .const import (DATA_ENTRY, DATA_SEASON, DATA_SERVER_CONFIG, DATA_STORAGE, DATA_WS, DATA_ZONE_MANAGER, DOMAIN,
+                    IP, PORT)
+from .panel import RELOADING, async_register_panel, async_unregister_panel
+from .season import SeasonManager
+from .services import async_register_services, async_unregister_services
+from .storage import HeatgerStorage
 from .websocket.ws_client import WSClient
 from .websocket.ws_ha import async_register_ws
 from .zone.zone_manager import ZoneManager
-from .panel import (
-    async_register_panel,
-    async_unregister_panel,
-)
 
-PLATFORMS = [Platform.SENSOR]
+PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.CLIMATE, Platform.SELECT, Platform.DATETIME,
+             Platform.NUMBER]
 # views and websocket commands can't be removed from HA, they are registered only once
 HTTP_REGISTERED = f'{DOMAIN}_http_registered'
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Heatger from a config entry."""
-    await Persistence(hass).init_data()
-    await Config(hass).get_config()
-
-    zone_manager = ZoneManager(hass)
+    hass.data.pop(RELOADING, None)
+    storage = HeatgerStorage(hass)
+    await storage.async_load()
+    season = SeasonManager(hass, storage)
+    zone_manager = ZoneManager(hass, storage, season)
     ws = WSClient(hass, f'{entry.data[IP]}:{entry.data[PORT]}',
                   zone_manager.get_all_data, zone_manager.updated_state)
 
@@ -41,15 +42,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     ws.set_as_main()
     hass.data[DOMAIN] = {
-        'zone_manager': zone_manager,
-        'WS': ws,
-        'server_config': server_config,
+        DATA_ENTRY: entry,
+        DATA_STORAGE: storage,
+        DATA_SEASON: season,
+        DATA_ZONE_MANAGER: zone_manager,
+        DATA_WS: ws,
+        DATA_SERVER_CONFIG: server_config,
     }
 
-    await zone_manager.run()
-    # send the current states to the server
+    await season.async_init()
+    await zone_manager.async_start()
+    # send the current orders to the server
     await ws.send_data(await zone_manager.get_all_data())
 
+    async_register_services(hass)
     if not hass.data.get(HTTP_REGISTERED):
         await async_register_api(hass)
         await async_register_ws(hass)
@@ -68,14 +74,17 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         return False
 
     data = hass.data.pop(DOMAIN, {})
-    zone_manager: ZoneManager | None = data.get('zone_manager')
+    zone_manager: ZoneManager | None = data.get(DATA_ZONE_MANAGER)
     if zone_manager:
-        await zone_manager.stop_loop()
-        zone_manager.services_unregister()
-    ws: WSClient | None = data.get('WS')
+        await zone_manager.async_stop()
+    season: SeasonManager | None = data.get(DATA_SEASON)
+    if season:
+        await season.async_stop()
+    ws: WSClient | None = data.get(DATA_WS)
     if ws:
         await ws.disconnect()
 
+    async_unregister_services(hass)
     async_unregister_panel(hass)
 
     return True

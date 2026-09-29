@@ -20,15 +20,51 @@
   "services": {
     "toggle": {
       "name": "Toggle",
-      "description": "Toggle state or mode of a zone.",
+      "description": "Toggle the state (until the next schedule) or the mode of a zone.",
       "fields": {
         "type": {
           "name": "Type",
-          "description": "the type of toggle (state or mode)."
+          "description": "The type of toggle (state or mode)."
         },
         "zone": {
           "name": "Zone",
-          "description": "the zone you want to update (number)."
+          "description": "The number of the zone."
+        }
+      }
+    },
+    "set_zone_state": {
+      "name": "Set zone state",
+      "description": "Comfort or eco until the next schedule or for a duration (auto mode), or the manual state (manual mode). Program: back to the program.",
+      "fields": {
+        "zone": {
+          "name": "Zone",
+          "description": "Name, id or number of the zone."
+        },
+        "state": {
+          "name": "State",
+          "description": "Comfort, eco, or program."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Optional: duration of the override (auto mode)."
+        }
+      }
+    },
+    "set_season": {
+      "name": "Set season",
+      "description": "Set the season, optionally until a date, then the next season.",
+      "fields": {
+        "season": {
+          "name": "Season",
+          "description": "Heating, cooling or stop."
+        },
+        "until": {
+          "name": "Until",
+          "description": "Optional: end of the season."
+        },
+        "next": {
+          "name": "Next season",
+          "description": "Season applied at the end (heating by default)."
         }
       }
     }
@@ -38,6 +74,81 @@
       "options": {
         "state": "State",
         "mode": "Mode"
+      }
+    },
+    "zone_state": {
+      "options": {
+        "comfort": "Comfort",
+        "eco": "Eco",
+        "program": "Program"
+      }
+    },
+    "season": {
+      "options": {
+        "heating": "Heating",
+        "cooling": "Cooling",
+        "stop": "Stop"
+      }
+    }
+  },
+  "entity": {
+    "climate": {
+      "zone": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "comfort": "Comfort",
+              "eco": "Eco"
+            }
+          }
+        }
+      }
+    },
+    "sensor": {
+      "next_change": {
+        "name": "Next change"
+      }
+    },
+    "binary_sensor": {
+      "waiting_presence": {
+        "name": "Waiting for presence"
+      }
+    },
+    "select": {
+      "season": {
+        "name": "Season",
+        "state": {
+          "heating": "Heating",
+          "cooling": "Cooling",
+          "stop": "Stop"
+        }
+      },
+      "season_next": {
+        "name": "Next season",
+        "state": {
+          "heating": "Heating",
+          "cooling": "Cooling",
+          "stop": "Stop"
+        }
+      }
+    },
+    "datetime": {
+      "season_end": {
+        "name": "End of the season"
+      }
+    },
+    "number": {
+      "setpoint_heat_comfort": {
+        "name": "{actuator} comfort heating"
+      },
+      "setpoint_heat_eco": {
+        "name": "{actuator} eco heating"
+      },
+      "setpoint_cool_comfort": {
+        "name": "{actuator} comfort cooling"
+      },
+      "setpoint_cool_eco": {
+        "name": "{actuator} eco cooling"
       }
     }
   }

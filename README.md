@@ -28,15 +28,31 @@ To install this integration, follow these steps.
 
 ## Use
 
-### States
-The integration provides the current state of zones as entities, so you can use them for your automations.
+### Concepts
+- **Season** (global): *heating*, *cooling* or *stop*, optionally until a date then another season
+  (the old frost-free is the season *stop* until a date).
+- **Zones**: each zone has a winter program (heating season) and a summer program (cooling season),
+  a mode auto / manual, and waits for someone at home before switching to comfort.
+- **Actuators** of a zone, configured in the Heatger panel:
+  - *pilot wire*: an output of the heatger server. Heating season: follows the zone; other seasons: frost-free.
+  - *thermostat*: any `climate` entity (air conditioner, heat pump, connected radiator...), with comfort / eco
+    setpoints per season (a temperature, a preset of the device, or off). Out of season the device is turned off
+    once, then left alone. A change made outside of Heatger is respected until the next change of state.
 
-### Service
-The integration provides a service to toggle state or mode of zones.
+### Entities
+- per zone: a `climate` entity (hvac mode *auto* = program, *heat*/*cool* = manual, preset comfort / eco),
+  the next change (`sensor`), waiting for presence (`binary_sensor`), the temperature setpoints (`number`)
+- global: the season and the next season (`select`), the end of the season (`datetime`)
 
-To use it, you should provide params in the payload :
- - type: the type of toggle (state or mode)
- - zone: the zone you want to update (number)
+### Services
+- `heatger.set_season`: season, optional end date and next season
+- `heatger.set_zone_state`: zone (name, id or number), comfort / eco / program, optional duration
+- `heatger.toggle`: toggle the state or the mode of the zone number N (version 1)
+
+### Migration from the version 1
+The data is migrated at the first start: each zone gets a pilot wire actuator on its output, the program becomes
+the winter and the summer program, a running frost-free becomes the season *stop*.
+A copy of the version 1 data is kept in `.storage/heatger-config-v1-backup` and `.storage/heatger-persist-v1-backup`.
 
 ## Frontend card
 You can also add a [card](https://github.com/kevin-briand/heatger-card)

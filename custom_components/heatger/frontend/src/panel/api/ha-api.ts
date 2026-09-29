@@ -1,20 +1,25 @@
 import { type HomeAssistant } from 'custom-card-helpers'
-import type { Prog } from './prog/dto/prog'
+import type { ProgramKey, ScheduleItem } from '../types'
 
 interface ApiResponse {
   success: boolean
+  id?: string
 }
 
-export const heatgerAddProg = async (hass: HomeAssistant, zoneId: string, prog: Prog[]): Promise<ApiResponse> => {
-  return await hass.callApi<ApiResponse>('POST', 'heatger/prog/add', { zone_id: zoneId, prog })
+export const heatgerAddProg = async (hass: HomeAssistant, zoneId: string, program: ProgramKey, prog: ScheduleItem[]): Promise<ApiResponse> => {
+  return await hass.callApi<ApiResponse>('POST', 'heatger/prog/add', { zone_id: zoneId, program, prog })
 }
 
-export const heatgerRemoveProg = async (hass: HomeAssistant, zoneId: string, prog: Prog): Promise<ApiResponse> => {
-  return await hass.callApi<ApiResponse>('POST', 'heatger/prog/remove', { zone_id: zoneId, prog })
+export const heatgerRemoveProg = async (hass: HomeAssistant, zoneId: string, program: ProgramKey, prog: ScheduleItem): Promise<ApiResponse> => {
+  return await hass.callApi<ApiResponse>('POST', 'heatger/prog/remove', { zone_id: zoneId, program, prog })
 }
 
-export const heatgerRemoveAllProg = async (hass: HomeAssistant, zoneId: string): Promise<ApiResponse> => {
-  return await hass.callApi<ApiResponse>('POST', 'heatger/prog/removeall', { zone_id: zoneId })
+export const heatgerRemoveAllProg = async (hass: HomeAssistant, zoneId: string, program: ProgramKey): Promise<ApiResponse> => {
+  return await hass.callApi<ApiResponse>('POST', 'heatger/prog/removeall', { zone_id: zoneId, program })
+}
+
+export const heatgerCopyProg = async (hass: HomeAssistant, zoneId: string, from: ProgramKey, to: ProgramKey): Promise<ApiResponse> => {
+  return await hass.callApi<ApiResponse>('POST', 'heatger/prog/copy', { zone_id: zoneId, from, to })
 }
 
 export const heatgerAddUser = async (hass: HomeAssistant, user: string): Promise<ApiResponse> => {
@@ -27,8 +32,4 @@ export const heatgerRemoveUser = async (hass: HomeAssistant, user: string): Prom
 
 export const heatgerAddZone = async (hass: HomeAssistant, name: string): Promise<ApiResponse> => {
   return await hass.callApi<ApiResponse>('POST', 'heatger/zone/add', { zone: name })
-}
-
-export const heatgerRemoveZone = async (hass: HomeAssistant, name: string): Promise<ApiResponse> => {
-  return await hass.callApi<ApiResponse>('POST', 'heatger/zone/remove', { zone: name })
 }

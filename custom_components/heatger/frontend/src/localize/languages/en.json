@@ -1,26 +1,102 @@
 {
   "panel": {
     "prog": {
-      "selectDays": "Select days",
-      "setTime": "Set time",
-      "setState": "Set State",
+      "selectDays": "Days",
+      "setTime": "Time",
+      "setState": "State",
       "day": "Day",
       "time": "Time",
-      "state": "State"
+      "state": "State",
+      "title": "Programs",
+      "hint_winter": "used during the heating season",
+      "hint_summer": "used during the cooling season",
+      "copy_from_winter": "Copy the winter program",
+      "copy_from_summer": "Copy the summer program",
+      "addTitle": "Add a change",
+      "weekdays": "Weekdays",
+      "weekend": "Weekend",
+      "everyDay": "Every day",
+      "confirmDeleteAll": "Delete every change of this program?",
+      "confirmCopy": "Replace this program with a copy of the other one?",
+      "noZone": "Create a zone first.",
+      "empty": "Empty program: the zone stays in Eco."
     },
     "user": {
-      "title": "Users",
+      "title": "Presence",
       "person": "Person",
       "name": "Name",
-      "id": "Id"
+      "id": "Id",
+      "hint": "Comfort is applied only if at least one of these persons is home. Empty list: no presence condition.",
+      "empty": "No person followed",
+      "home": "Home",
+      "away": "Away"
     },
     "general": {
-      "title": "General",
+      "title": "Zones and devices",
       "name": "Name"
     },
     "add": "Add",
     "delete": "Delete",
-    "deleteAll": "Delete all"
+    "deleteAll": "Delete all",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "zone": {
+      "title": "Zones",
+      "hint": "Each zone drives its devices: pilot wire outputs of the server and/or thermostats (air conditioner, connected radiator...).",
+      "pilotWire": "Pilot wire",
+      "output": "Server output",
+      "pilotWireHint": "Follows the zone during the heating season, frost-free otherwise",
+      "thermostat": "Thermostat",
+      "entity": "Entity",
+      "unavailable": "Device unavailable: its capabilities are unknown.",
+      "controlled_heat": "Controlled during heating",
+      "controlled_cool": "Controlled during cooling",
+      "kindTemperature": "Temperature",
+      "kindPreset": "Preset",
+      "kindOff": "Off",
+      "enabled": "Zone enabled",
+      "temperatureSensor": "Temperature sensor",
+      "actuators": "Devices",
+      "reloading": "Saved, reloading Heatger...",
+      "confirmDelete": "Delete the zone",
+      "disabled": "disabled",
+      "noActuator": "no device",
+      "empty": "No zone yet",
+      "newZone": "Name of the new zone",
+      "notControlled": "Not controlled during this season: turned off once when the season starts, then left alone.",
+      "thermostatHint": "Choose a climate entity",
+      "chooseEntity": "Choose an entity…",
+      "general": "General",
+      "none": "None",
+      "noActuatorHint": "This zone does not drive any device yet."
+    },
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "tabs": {
+      "season": "Season",
+      "zones": "Zones",
+      "programs": "Programs",
+      "setpoints": "Setpoints",
+      "presence": "Presence"
+    },
+    "setpoints": {
+      "hint": "Setpoints of the thermostats for each season, applied at once if the current state uses them. To control a device during another season, use the Zones tab.",
+      "empty": "No thermostat: add one to a zone in the Zones tab.",
+      "notControlled": "Not controlled during this season",
+      "now": "current",
+      "apply": "Apply",
+      "unavailable": "Unavailable",
+      "hvac": {
+        "off": "Off",
+        "heat": "Heating",
+        "cool": "Cooling",
+        "heat_cool": "Auto",
+        "auto": "Auto",
+        "dry": "Dry",
+        "fan_only": "Fan"
+      }
+    }
   },
   "state": {
     "comfort": "Comfort",
@@ -52,5 +128,28 @@
   "mode": {
     "auto": "Auto",
     "manual": "Manual"
+  },
+  "program": {
+    "winter": "Winter",
+    "summer": "Summer"
+  },
+  "season": {
+    "title": "Season",
+    "current": "Season",
+    "season": "Season",
+    "heating": "Heating",
+    "cooling": "Cooling",
+    "stop": "Stop",
+    "hint_heating": "Winter program; the radiators follow the zones, the thermostats with heating setpoints too.",
+    "hint_cooling": "Summer program; the radiators stay frost-free, the air conditioners follow the zones.",
+    "hint_stop": "No program; radiators frost-free, thermostats turned off once then left alone.",
+    "until": "Until",
+    "then": "then",
+    "cancelEnd": "Cancel",
+    "program": "Schedule a change",
+    "untilDate": "Until",
+    "apply": "Apply",
+    "missingDate": "Set the end date.",
+    "thenSeason": "Then"
   }
 }

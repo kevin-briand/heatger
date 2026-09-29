@@ -19,16 +19,52 @@
   },
   "services": {
     "toggle": {
-      "name": "Toggle",
-      "description": "Changement de l'état ou le mode d'une zone.",
+      "name": "Basculer",
+      "description": "Bascule l'état (jusqu'au prochain créneau) ou le mode d'une zone.",
       "fields": {
         "type": {
           "name": "Type",
-          "description": "Le type de basculement (Etat ou Mode)."
+          "description": "Le type de basculement (état ou mode)."
         },
         "zone": {
           "name": "Zone",
-          "description": "La zone que vous voulez modifier."
+          "description": "Le numéro de la zone."
+        }
+      }
+    },
+    "set_zone_state": {
+      "name": "Définir l'état d'une zone",
+      "description": "Confort ou Éco jusqu'au prochain créneau ou pendant une durée (mode auto), ou l'état manuel (mode manuel). Programme : retour au programme.",
+      "fields": {
+        "zone": {
+          "name": "Zone",
+          "description": "Nom, identifiant ou numéro de la zone."
+        },
+        "state": {
+          "name": "État",
+          "description": "Confort, Éco ou programme."
+        },
+        "duration": {
+          "name": "Durée",
+          "description": "Optionnel : durée de la dérogation (mode auto)."
+        }
+      }
+    },
+    "set_season": {
+      "name": "Définir la saison",
+      "description": "Définit la saison, éventuellement jusqu'à une date, puis la saison suivante.",
+      "fields": {
+        "season": {
+          "name": "Saison",
+          "description": "Chauffage, climatisation ou arrêt."
+        },
+        "until": {
+          "name": "Jusqu'au",
+          "description": "Optionnel : fin de la saison."
+        },
+        "next": {
+          "name": "Saison suivante",
+          "description": "Saison appliquée à la fin (chauffage par défaut)."
         }
       }
     }
@@ -36,8 +72,83 @@
   "selector": {
     "type": {
       "options": {
-        "state": "Etat",
+        "state": "État",
         "mode": "Mode"
+      }
+    },
+    "zone_state": {
+      "options": {
+        "comfort": "Confort",
+        "eco": "Éco",
+        "program": "Programme"
+      }
+    },
+    "season": {
+      "options": {
+        "heating": "Chauffage",
+        "cooling": "Climatisation",
+        "stop": "Arrêt"
+      }
+    }
+  },
+  "entity": {
+    "climate": {
+      "zone": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "comfort": "Confort",
+              "eco": "Éco"
+            }
+          }
+        }
+      }
+    },
+    "sensor": {
+      "next_change": {
+        "name": "Prochain changement"
+      }
+    },
+    "binary_sensor": {
+      "waiting_presence": {
+        "name": "Attente de présence"
+      }
+    },
+    "select": {
+      "season": {
+        "name": "Saison",
+        "state": {
+          "heating": "Chauffage",
+          "cooling": "Climatisation",
+          "stop": "Arrêt"
+        }
+      },
+      "season_next": {
+        "name": "Saison suivante",
+        "state": {
+          "heating": "Chauffage",
+          "cooling": "Climatisation",
+          "stop": "Arrêt"
+        }
+      }
+    },
+    "datetime": {
+      "season_end": {
+        "name": "Fin de la saison"
+      }
+    },
+    "number": {
+      "setpoint_heat_comfort": {
+        "name": "{actuator} confort chauffage"
+      },
+      "setpoint_heat_eco": {
+        "name": "{actuator} éco chauffage"
+      },
+      "setpoint_cool_comfort": {
+        "name": "{actuator} confort climatisation"
+      },
+      "setpoint_cool_eco": {
+        "name": "{actuator} éco climatisation"
       }
     }
   }

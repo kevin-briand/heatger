@@ -1,30 +1,106 @@
 {
   "panel": {
     "prog": {
-      "selectDays": "Selectionner jours",
+      "selectDays": "Jours",
       "setTime": "Heure",
-      "setState": "Etat",
+      "setState": "État",
       "day": "Jour",
       "time": "Heure",
-      "state": "Etat"
+      "state": "État",
+      "title": "Programmes",
+      "hint_winter": "utilisé en saison Chauffage",
+      "hint_summer": "utilisé en saison Climatisation",
+      "copy_from_winter": "Copier le programme Hiver",
+      "copy_from_summer": "Copier le programme Été",
+      "addTitle": "Ajouter un changement",
+      "weekdays": "Semaine",
+      "weekend": "Week-end",
+      "everyDay": "Tous les jours",
+      "confirmDeleteAll": "Supprimer tous les changements de ce programme ?",
+      "confirmCopy": "Remplacer ce programme par une copie de l'autre ?",
+      "noZone": "Créez d'abord une zone.",
+      "empty": "Programme vide : la zone reste en Éco."
     },
     "user": {
-      "title": "Utilisateurs",
+      "title": "Présence",
       "person": "Personne",
       "name": "Nom",
-      "id": "Id"
+      "id": "Id",
+      "hint": "Le Confort n'est appliqué que si au moins une de ces personnes est à la maison. Liste vide : pas de condition de présence.",
+      "empty": "Aucune personne suivie",
+      "home": "Présent",
+      "away": "Absent"
     },
     "general": {
-      "title": "Général",
+      "title": "Zones et équipements",
       "name": "Nom"
     },
     "add": "Ajouter",
     "delete": "Supprimer",
-    "deleteAll": "Tous supprimer"
+    "deleteAll": "Tous supprimer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "zone": {
+      "title": "Zones",
+      "hint": "Chaque zone pilote ses équipements : sorties fil pilote du serveur et/ou thermostats (clim, radiateur connecté...).",
+      "pilotWire": "Fil pilote",
+      "output": "Sortie du serveur",
+      "pilotWireHint": "Suit l'état de la zone en saison Chauffage, hors-gel sinon",
+      "thermostat": "Thermostat",
+      "entity": "Entité",
+      "unavailable": "Appareil indisponible : ses capacités ne sont pas connues.",
+      "controlled_heat": "Piloté en saison Chauffage",
+      "controlled_cool": "Piloté en saison Climatisation",
+      "kindTemperature": "Température",
+      "kindPreset": "Preset",
+      "kindOff": "Éteint",
+      "enabled": "Zone active",
+      "temperatureSensor": "Capteur de température",
+      "actuators": "Équipements",
+      "reloading": "Enregistré, rechargement de Heatger...",
+      "confirmDelete": "Supprimer la zone",
+      "disabled": "désactivée",
+      "noActuator": "aucun équipement",
+      "empty": "Aucune zone pour le moment",
+      "newZone": "Nom de la nouvelle zone",
+      "notControlled": "Non piloté pendant cette saison : éteint une fois au début de la saison, puis laissé libre.",
+      "thermostatHint": "Choisissez une entité climate",
+      "chooseEntity": "Choisir une entité…",
+      "general": "Général",
+      "none": "Aucun",
+      "noActuatorHint": "Cette zone ne pilote encore aucun équipement."
+    },
+    "moveUp": "Monter",
+    "moveDown": "Descendre",
+    "tabs": {
+      "season": "Saison",
+      "zones": "Zones",
+      "programs": "Programmes",
+      "setpoints": "Consignes",
+      "presence": "Présence"
+    },
+    "setpoints": {
+      "hint": "Consignes des thermostats pour chaque saison, appliquées tout de suite si l'état en cours les utilise. Pour piloter un appareil dans une autre saison, passez par l'onglet Zones.",
+      "empty": "Aucun thermostat : ajoutez-en un à une zone dans l'onglet Zones.",
+      "notControlled": "Non piloté pendant cette saison",
+      "now": "en cours",
+      "apply": "Appliquer",
+      "unavailable": "Indisponible",
+      "hvac": {
+        "off": "Éteint",
+        "heat": "Chauffe",
+        "cool": "Froid",
+        "heat_cool": "Auto",
+        "auto": "Auto",
+        "dry": "Déshumidification",
+        "fan_only": "Ventilation"
+      }
+    }
   },
   "state": {
     "comfort": "Confort",
-    "eco": "Eco",
+    "eco": "Éco",
     "frostfree": "Hors-gel"
   },
   "dayOfWeek": {
@@ -37,7 +113,7 @@
     "sunday": "Dimanche"
   },
   "zone": "Zone",
-    "error": "Erreur",
+  "error": "Erreur",
   "card": {
     "mode": "Mode",
     "timeout": "Temps restant",
@@ -52,5 +128,28 @@
   "mode": {
     "auto": "Auto",
     "manual": "Manuel"
+  },
+  "program": {
+    "winter": "Hiver",
+    "summer": "Été"
+  },
+  "season": {
+    "title": "Saison",
+    "current": "Saison",
+    "season": "Saison",
+    "heating": "Chauffage",
+    "cooling": "Climatisation",
+    "stop": "Arrêt",
+    "hint_heating": "Programme Hiver ; les radiateurs suivent les zones, les thermostats avec consignes de chauffe aussi.",
+    "hint_cooling": "Programme Été ; les radiateurs restent en hors-gel, les clims suivent les zones.",
+    "hint_stop": "Aucun programme ; radiateurs en hors-gel, thermostats éteints une fois puis laissés libres.",
+    "until": "Jusqu'au",
+    "then": "puis",
+    "cancelEnd": "Annuler",
+    "program": "Programmer un changement",
+    "untilDate": "Jusqu'au",
+    "apply": "Appliquer",
+    "missingDate": "Indiquez la date de fin.",
+    "thenSeason": "Puis"
   }
 }

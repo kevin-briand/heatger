@@ -1,59 +1,59 @@
-import { type CSSResultGroup, html, LitElement, PropertyDeclaration, type TemplateResult } from 'lit';
+import { css, type CSSResultGroup, html, LitElement, nothing, type PropertyDeclaration, type TemplateResult } from 'lit'
 import { type HomeAssistant, type Panel } from 'custom-card-helpers'
 import { customElement, property, state } from 'lit/decorators.js'
-import './table_users'
-import { type HeatgerUsersTable } from './table_users'
 import { localize } from '../../localize/localize'
 import { style } from '../../style'
 import { heatgerGetAvailablePersons, heatgerGetSelectedPersons } from '../websocket/ha-ws'
 import { type HassEntityBase } from 'home-assistant-js-websocket'
-import { heatgerAddUser, heatgerRemoveUser } from '../api/ha-api';
+import { heatgerAddUser, heatgerRemoveUser } from '../api/ha-api'
+import { errorAlert, iconButton } from '../ui'
 
 @customElement('heatger-users-card')
 export class HeatgerUsersCard extends LitElement {
-  @property() public hass!: HomeAssistant
-  @property() public panel!: Panel
+  @property({ attribute: false }) public hass!: HomeAssistant
+  @property({ attribute: false }) public panel!: Panel
   @property({ type: Boolean, reflect: true }) public narrow!: boolean
-  @property() public reload!: () => void
+  @property({ attribute: false }) public reload!: () => void
   @state() private error: string | null = null
-  private availablePersons: HassEntityBase[] = []
-  private selectedPersons: string[] = []
+  @state() private availablePersons: HassEntityBase[] = []
+  @state() private selectedPersons: string[] = []
+  @state() private toAdd = ''
 
   firstUpdated (): void {
     void this.updateData()
   }
 
-  async updateData (): Promise<void> {
-    this.availablePersons = await heatgerGetAvailablePersons(this.hass)
-    this.selectedPersons = await heatgerGetSelectedPersons(this.hass)
-    this.updateUsersTable()
-    this.requestUpdate()
+  private t (key: string): string {
+    return localize(key, this.hass.language)
   }
 
-  handleAdd (event: MouseEvent): void {
-    const button = event.target as HTMLElement
-    button.blur()
-    const form = this.shadowRoot?.querySelector('form')
-    if (form == null) return
-    const user = form.availablePersons.value
+  async updateData (): Promise<void> {
+    try {
+      const [available, selected] = await Promise.all([heatgerGetAvailablePersons(this.hass), heatgerGetSelectedPersons(this.hass)])
+      this.availablePersons = available
+      this.selectedPersons = selected.filter((user) => user !== '')
+      this.error = null
+    } catch (e) {
+      this.error = (e as Error).message
+    }
+  }
+
+  private get candidates (): HassEntityBase[] {
+    return this.availablePersons.filter((person) => !this.selectedPersons.includes(person.entity_id))
+  }
+
+  handleAdd (): void {
+    const user = this.toAdd !== '' ? this.toAdd : this.candidates[0]?.entity_id ?? ''
     if (user === '') return
-    void heatgerAddUser(this.hass, user).then(() => { void this.updateData() })
+    heatgerAddUser(this.hass, user).then(() => {
+      this.toAdd = ''
+      void this.updateData()
+    }).catch((e: Error) => { this.error = e.message })
   }
 
   handleDelete (user: string): void {
-    if (user === '') return
-    void heatgerRemoveUser(this.hass, user).then(() => { void this.updateData() })
-  }
-
-  updateUsersTable (): void {
-    this.error = null
-    const usersTable = this.shadowRoot?.querySelector('heatger-users-table') as HeatgerUsersTable
-    if (usersTable === null) return
-    usersTable.disabled = true
-    usersTable.requestUpdate()
-    usersTable.datas = this.selectedPersons
-    usersTable.disabled = false
-    usersTable.requestUpdate()
+    heatgerRemoveUser(this.hass, user).then(() => { void this.updateData() })
+      .catch((e: Error) => { this.error = e.message })
   }
 
   requestUpdate (name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
@@ -61,38 +61,72 @@ export class HeatgerUsersCard extends LitElement {
     if (name === 'panel') void this.updateData()
   }
 
-  render (): TemplateResult<1> {
+  private renderUser (user: string): TemplateResult<1> {
+    const entity = this.hass.states[user]
+    const name = String(entity?.attributes.friendly_name ?? user)
+    const home = entity?.state === 'home'
     return html`
-      <ha-card header="${localize('panel.user.title', this.hass.language)}">
-        <div class="card-content">
-          <div class="content">
-            <form>
-              <div class="flexRow">
-                <label for="availablePersons">${localize('panel.user.person', this.hass.language)}</label>
-                <select id="availablePersons">
-                  ${this.availablePersons.map(ap => {
-                    if (!this.selectedPersons.some(sp => sp === ap.entity_id)) {
-                      return html`<option value="${ap.entity_id}">${ap.attributes.friendly_name ?? ap.entity_id}</option>`
-                    }
-                    return ''
-                  })}
-                </select>
-              </div>
-              <div class="flexRow flexRow-center">
-                <ha-button @click='${this.handleAdd}' class="button" id="add">
-                  ${localize('panel.add', this.hass.language)}
-                </ha-button>
-              </div>
-            </form>
-            ${this.error}
-            <heatger-users-table .hass="${this.hass}" .rowClicked="${this.handleDelete.bind(this)}"></heatger-users-table>
+      <div class="list-item">
+        <ha-icon icon="${home ? 'mdi:account' : 'mdi:account-outline'}"></ha-icon>
+        <div class="main">
+          <div class="title">${name}
+            ${entity !== undefined
+              ? html`<span class="badge ${home ? 'home' : ''}">${this.t(home ? 'panel.user.home' : 'panel.user.away')}</span>`
+              : nothing}
           </div>
+          <div class="subtitle">${user}</div>
         </div>
-      </ha-card>      
+        <div class="buttons">
+          ${iconButton('mdi:delete-outline', this.t('panel.delete'), () => { this.handleDelete(user) }, { danger: true })}
+        </div>
+      </div>`
+  }
+
+  render (): TemplateResult<1> {
+    const candidates = this.candidates
+    return html`
+      <ha-card>
+        <div class="card-content">
+          ${errorAlert(this.error)}
+          <p class="hint">${this.t('panel.user.hint')}</p>
+          <div class="list">
+            ${this.selectedPersons.length === 0 ? html`<div class="list-empty">${this.t('panel.user.empty')}</div>` : nothing}
+            ${this.selectedPersons.map((user) => this.renderUser(user))}
+          </div>
+          ${candidates.length > 0
+            ? html`
+              <div class="add-row">
+                <select id="availablePersons" @change="${(e: Event) => { this.toAdd = (e.target as HTMLSelectElement).value }}">
+                  ${candidates.map((person) => html`
+                    <option value="${person.entity_id}" ?selected="${person.entity_id === this.toAdd}">
+                      ${person.attributes.friendly_name ?? person.entity_id}</option>`)}
+                </select>
+                <button class="btn" id="add" @click="${this.handleAdd}"><ha-icon icon="mdi:plus"></ha-icon>${this.t('panel.add')}</button>
+              </div>`
+            : nothing}
+        </div>
+      </ha-card>
     `
   }
 
   static get styles (): CSSResultGroup {
-    return style
+    return css`
+      ${style}
+      .add-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 12px;
+      }
+
+      .add-row select {
+        flex: 1;
+      }
+
+      .badge.home {
+        background-color: color-mix(in srgb, var(--success-color, #43a047) 20%, transparent);
+        color: var(--success-color, #43a047);
+      }
+    `
   }
 }

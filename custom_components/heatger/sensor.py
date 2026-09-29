@@ -9,6 +9,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import SensorCoordinator
+from .entity import HeatgerZoneEntity, get_season, get_zone_manager
 
 
 def _is_enabled(server_config: dict, *keys: str) -> bool:
@@ -50,7 +51,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
             HeatgerSensor(em_coordinator, device_info, 'electric_meter', SensorDeviceClass.ENERGY,
                           UnitOfEnergy.WATT_HOUR, SensorStateClass.TOTAL_INCREASING)
         )
+    season = get_season(hass)
+    entities += [NextChangeSensor(entry, zone, season) for zone in get_zone_manager(hass, entry).zones]
     async_add_entities(entities)
+
+
+class NextChangeSensor(HeatgerZoneEntity, SensorEntity):
+    """Date of the next change of state of the zone (next schedule or end of an override)"""
+
+    _attr_translation_key = 'next_change'
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(self, entry, zone, season):
+        super().__init__(entry, zone, season, 'next_change')
+
+    @property
+    def native_value(self):
+        return self.zone.next_change
 
 
 class HeatgerSensor(CoordinatorEntity, SensorEntity):

@@ -7,7 +7,7 @@
       "dom.iterable"
     ],
     "experimentalDecorators": true,
-    "useDefineForClassFields": true,
+    "useDefineForClassFields": false,
     "module": "esNext",
     "moduleResolution": "node",
     "resolveJsonModule": true,

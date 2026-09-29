@@ -19,3 +19,52 @@ toggle:
           options:
             - state
             - mode
+set_zone_state:
+  fields:
+    zone:
+      example: "Jour"
+      required: true
+      selector:
+        text:
+    state:
+      example: "comfort"
+      required: true
+      selector:
+        select:
+          translation_key: "zone_state"
+          options:
+            - comfort
+            - eco
+            - program
+    duration:
+      example: "02:00:00"
+      required: false
+      selector:
+        duration:
+set_season:
+  fields:
+    season:
+      example: "stop"
+      required: true
+      selector:
+        select:
+          translation_key: "season"
+          options:
+            - heating
+            - cooling
+            - stop
+    until:
+      example: "2026-11-01 00:00:00"
+      required: false
+      selector:
+        datetime:
+    next:
+      example: "heating"
+      required: false
+      selector:
+        select:
+          translation_key: "season"
+          options:
+            - heating
+            - cooling
+            - stop
